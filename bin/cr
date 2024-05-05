@@ -1,0 +1,151 @@
+#!/usr/bin/env node
+// (add inspect above for debug) inspect
+
+const args = process.argv;
+const RED = '\x1b[31m';
+const WHITE = '\x1b[37m';
+const GREEN = '\x1b[32m';
+const YELLOW = '\x1b[33m';
+
+({ colorReduce, log_help, log_support } = require('../src/kmcolor.js'));
+
+if (args.length <= 2) {
+  log_help();
+}
+else {
+  console.log(`${YELLOW}
+   ____________________________
+  |                            |
+  | REDUCING IMAGE COLOR COUNT |
+  |____________________________|
+  ${WHITE}
+  `);
+
+  let file = args[2];
+  let flags = {};
+
+  flags.replace = [];
+
+  for (let i = 3; i < args.length; i++) {
+    let arg = args[i];
+
+    if (arg === '-analyze') {
+      let log_file = args[++i];
+      flags.analyze = log_file;
+    }
+    else if (arg === '-post-analysis') {
+      let log_file = args[++i];
+      flags.postAnalysis = log_file;
+    }
+    else if (arg === '-max-palette') {
+      let max_palette_entries = parseInt(args[++i], 10);
+      flags.maxPalette = max_palette_entries;
+    }
+    else if (arg === '-tolerance') {
+      let tolerance_string = args[++i];
+      let color_tolerance = 0;
+
+      if (tolerance_string.match(/0x[0-9a-fA-F]{8}/)) {
+        color_tolerance = parseInt(tolerance_string.substring(2), 16);
+      }
+      else {
+        color_tolerance = parseInt(tolerance_string, 10);
+      }
+      flags.tolerance = color_tolerance;
+    }
+    else if (arg === '-blend-palette') {
+      flags.blendPalette = true;
+    }
+    else if (arg === '-alpha-clip') {
+      let clip_string = args[++i];
+      let alpha_clip = 999;
+
+      if (clip_string.match(/0x[0-9a-fA-F]{8}/)) {
+        alpha_clip = parseInt(clip_string.substring(2), 16);
+      }
+      else {
+        alpha_clip = parseInt(clip_string, 10);
+      }
+
+      if (alpha_clip > 255) {
+        console.log(`${RED}
+        -alpha-clip must be followed by a value between 0 and 255
+        ${WHITE}`);
+      }
+      flags.alphaClip = alpha_clip;
+    }
+    else if (arg === '-o') {
+      let out_file = args[++i];
+      if (!out_file.match(/[.*\.png$]/)) {
+        console.log(`${RED}
+        -o must be followed by the name of a PNG file.
+        ${WHITE}`);
+      }
+      flags.outFile = out_file;
+    }
+    else if (arg === '-webp') {
+      flags.webp = true;
+    }
+    else if (arg === '-config') {
+      let config_file = args[++i];
+      if (config_file == null || !config_file.match(/[.*\.json$]/)) {
+        console.log(`${RED}
+        -config must be followed by the name of a JSON file.
+
+        An example JSON file would look like this:
+        ${YELLOW}
+        {
+          "outFile": "out.png",
+          "analyze": "log.txt",
+          "blendPalette": true,
+          "postAnalysis": "post-log.txt",
+          "tolerance": 22,
+          "alphaClip": 16,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+          "replace": [
+            {                                                                            
+              "initialColor": "1e1e1eff",
+              "replaceColor": "322624ff"
+            },
+            {
+              "initialColor": "fae7e5ff",
+              "replaceColor": "ffffffff"
+            },
+            {
+              "initialColor": "f6d4d0ff",
+              "replaceColor": "e2e1e1ff"
+            }
+          ]
+        }        
+        ${WHITE}`);
+      }
+      else {
+        flags.configFile = config_file;
+      }
+    }
+    else if (arg === '-replace') {
+      let arg1 = args[++i];
+      let arg2 = args[++i];
+
+      if (!(arg1.match(/[0-9a-fA-F]{8}/) && arg2.match(/[0-9a-fA-F]{8}/))) {
+        console.log(`${RED}
+          The -replace argument must be followed by two 8-digit hex numbers.
+        ${WHITE}`)
+      }
+
+      let initial_color = parseInt(arg1, 16);
+      let replace_color = parseInt(arg2, 16);
+      flags.replace.push(
+        {
+          initialColor: initial_color,
+          replaceColor: replace_color,
+        }
+      );
+    }
+  }
+
+  colorReduce(file, flags);
+
+  log_support();
+
+}
+

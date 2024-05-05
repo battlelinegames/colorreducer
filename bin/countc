@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+
+const args = process.argv;
+const RED = '\x1b[31m';
+const WHITE = '\x1b[37m';
+const GREEN = '\x1b[32m';
+const YELLOW = '\x1b[33m';
+
+({ countColors } = require('../src/colorCount.js'));
+
+  console.log(`${YELLOW}
+   ____________________________
+  |                            |
+  |        COUNT COLORS        |
+  |____________________________|
+  ${WHITE}`);
+
+let file = args[2];
+
+if (file === undefined) {
+  console.log(`${RED}Please provide a file name`);
+  process.exit(1);
+}
+
+let count = countColors(file);
+
+console.log(`
+${GREEN}The colors in the file are:${YELLOW} ${count} ${WHITE}colors
+`);

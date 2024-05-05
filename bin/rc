@@ -1,0 +1,114 @@
+#!/usr/bin/env node
+({ reduceColors, logHelp, logSupport } = require('../src/kmcolor.js'));
+
+// (add inspect above for debug) inspect
+
+const args = process.argv;
+const RED = '\x1b[31m';
+const WHITE = '\x1b[37m';
+const GREEN = '\x1b[32m';
+const YELLOW = '\x1b[33m';
+
+function parseNumberWithSuffix(input) {
+  // Check if the last character is 'K', 'k', 'M', or 'm'
+  const firstTry = parseInt(input);
+  if (!isNaN(firstTry)) {
+    return firstTry;
+  }
+
+  const suffix = input.slice(-1).toLowerCase();
+  const number = parseInt(input.slice(0, -1));
+
+  if (isNaN(number)) {
+    console.log(`${RED}
+    Invalid Batch Size.  Please enter a number followed by 'K' or 'M' (e.g. 100K, 1M, 2K, etc.)
+    ${WHITE}
+    `);
+     
+      return 500_000;
+  }
+
+  switch(suffix) {
+      case 'k':
+          return number * 1000;
+      case 'm':
+          return number * 1_000_000;
+      default:
+        console.log(`${RED}
+        Invalid Batch Size.  Please enter a number followed by 'K' or 'M' (e.g. 100K, 1M, 2K, etc.)
+        ${WHITE}
+        `);
+        return 100_000; 
+  }
+}
+
+var file = 'unknown';
+var color_count = 256;
+var batch_size = 100_000;
+var iterations = 10;
+var savepng = false;
+
+args.forEach((arg, index) => {
+  const [key, value] = arg.split('=');
+
+  if( index < 2 ) {
+    return;
+  }
+  else if( index === 3 && arg[0] != '-' ) {
+    file = arg;
+  }
+  else if( index === 4 && arg[0] != '-') {
+    color_count = arg;
+  }
+  else if( key === '--savepng' ) {
+    savepng = true;
+  }
+  else if (key === '-h' || key === '--help') {
+    logHelp();
+    exit(0);
+  }
+  else if (key === '-f' || key === '--file') {
+    file = value;
+  }
+  else if (key === '-c' || key === '--color_count') {
+    color_count = value;
+  }
+  else if (key === '-b' || key === '--batch_size') {
+    batch_size = parseInt(value);
+    if( value < 1000 ) {
+      batch_size = value * 1000;
+    }
+  }
+  else if (key === '-i' || key === '--iterations') {
+    iterations = value;
+  }
+  else {
+    console.log(`Unknown argument: ${key}`)
+  }
+});
+
+
+if (args.length <= 2) {
+  logHelp();
+}
+else {
+  console.log(`${YELLOW}
+   ____________________________
+  |                            |
+  | REDUCING IMAGE COLOR COUNT |
+  |____________________________|
+  ${WHITE}
+  `);
+
+  let file = args[2];
+  let color_count = args[3] || 256;
+  let flags = {};
+
+  flags.replace = [];
+
+  reduceColors(file, color_count, iterations, batch_size, savepng).then(() => {
+    logSupport();
+  });
+
+}
+

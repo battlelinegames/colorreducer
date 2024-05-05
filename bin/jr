@@ -1,0 +1,57 @@
+#!/usr/bin/env node
+
+const args = process.argv;
+const RED = '\x1b[31m';
+const WHITE = '\x1b[37m';
+const GREEN = '\x1b[32m';
+const YELLOW = '\x1b[33m';
+
+let { jsonReduce } = require('../src/jsonReduce.js');
+let { log_support } = require('../src/colorReduce.js');
+
+if (args.length <= 2) {
+  log_support();
+}
+else {
+  console.log(`${YELLOW}
+   ____________________________
+  |                            |
+  | REDUCING JSON SPRITE SHEET |
+  |____________________________|
+  ${WHITE}
+  `);
+
+  let file = args[2];
+  let flags = {};
+
+  flags.replace = [];
+
+  for (let i = 3; i < args.length; i++) {
+    let arg = args[i];
+
+    if (arg === '-o') {
+      let out_file = args[++i];
+      if (!out_file.match(/[.*\.png$]/)) {
+        console.log(`${RED}
+        -o must be followed by the name of a PNG file.
+        ${WHITE}`);
+      }
+      flags.outFile = out_file;
+    }
+    else if (arg === '-config') {
+      let config_file = args[++i];
+      if (!config_file.match(/[.*\.json$]/)) {
+        console.log(`${RED}
+        -config must be followed by the name of a JSON file.
+        ${WHITE}`);
+      }
+      flags.configFile = config_file;
+    }
+  }
+
+  jsonReduce(file, flags);
+
+  log_support();
+
+}
+
